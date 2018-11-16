@@ -27,7 +27,8 @@ import serial
 # For testing purposes, where no real serial device is plugged in, set to False
 REAL_SERIAL = True
 TERMINAL_PROMPT_STR = "terminal> "
-TERMINAL_PROMPT_STR_LEN = len(TERMINAL_PROMPT_STR)
+TP_SPACES = ' '*len(TERMINAL_PROMPT_STR) # Terminal Prompt spaces string
+EXIT_COMMAND = "exit" # Command to exit this program
 
 def print2(*args_tuple, **kwargs_dict):
     """
@@ -36,12 +37,18 @@ def print2(*args_tuple, **kwargs_dict):
     A print() wrapper to append a short string in front of prints coming from this program itself.
     This helps distinguish data being received over serial from data being printed by this program's internals.
     """
-    args1 = 
-    args_tuple = ("terminal>", *args_tuple)
+
+    # Append TERMINAL_PROMPT_STR to front of first element in tuple, rebuilding the tuple
+    if (len(args_tuple) > 1):
+        args_tuple = (TERMINAL_PROMPT_STR + args_tuple[0], args_tuple[1:])
+    else:
+        args_tuple = (TERMINAL_PROMPT_STR + args_tuple[0],)
+
     print(*args_tuple, **kwargs_dict)
 
 def read_kbd_input(inputQueue):
-    print2('Ready for keyboard input:')
+    global EXIT_COMMAND
+    print2('Ready for keyboard input. To exit the serial terminal, type "{}".'.format(EXIT_COMMAND))
     while (True):
         # Receive keyboard input from user.
         input_str = input()
@@ -52,8 +59,7 @@ def read_kbd_input(inputQueue):
         inputQueue.put(input_str)
 
 def main():
-
-    EXIT_COMMAND = "exit" # Command to exit this program
+    global EXIT_COMMAND
     TERMINATING_CHARS = '\r' # For terminating serial output
 
     # Open serial port
@@ -65,8 +71,11 @@ def main():
     if (REAL_SERIAL == False):
         print2("SIMULATED SERIAL: ")
 
-    print2('Opening serial port using PySerial. serial.Version = {}\n'
-           '  port = "{}", baudrate = {}'.format(serial.VERSION, port, baudrate))
+    print2(('Opening serial port using PySerial.\n' + 
+             TP_SPACES + 'serial.Version = {}\n' + 
+             TP_SPACES + 'port = "{}"\n' + 
+             TP_SPACES + 'baudrate = {}'
+            ).format(serial.VERSION, port, baudrate))
 
     if (REAL_SERIAL == True):
         ser = serial.Serial(
