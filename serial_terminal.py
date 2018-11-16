@@ -26,16 +26,22 @@ import serial
 # Global variables
 # For testing purposes, where no real serial device is plugged in, set to False
 REAL_SERIAL = True
+TERMINAL_PROMPT_STR = "terminal> "
+TERMINAL_PROMPT_STR_LEN = len(TERMINAL_PROMPT_STR)
 
-def terminal_print(*args_tuple):
+def print2(*args_tuple, **kwargs_dict):
     """
+    Print from terminal
+
     A print() wrapper to append a short string in front of prints coming from this program itself.
     This helps distinguish data being received over serial from data being printed by this program's internals.
     """
-    print("terminal > ", args_tuple)
+    args1 = 
+    args_tuple = ("terminal>", *args_tuple)
+    print(*args_tuple, **kwargs_dict)
 
 def read_kbd_input(inputQueue):
-    print('Ready for keyboard input:')
+    print2('Ready for keyboard input:')
     while (True):
         # Receive keyboard input from user.
         input_str = input()
@@ -57,10 +63,10 @@ def main():
     baudrate = 115200
 
     if (REAL_SERIAL == False):
-        print("SIMULATED SERIAL: ")
+        print2("SIMULATED SERIAL: ")
 
-    print('Opening serial port using PySerial. serial.Version = {}\n'
-          '  port = "{}", baudrate = {}'.format(serial.VERSION, port, baudrate))
+    print2('Opening serial port using PySerial. serial.Version = {}\n'
+           '  port = "{}", baudrate = {}'.format(serial.VERSION, port, baudrate))
 
     if (REAL_SERIAL == True):
         ser = serial.Serial(
@@ -94,10 +100,10 @@ def main():
         # atomic access. Since this is the only place we can remove from the queue, however, no locks are required.
         if (inputQueue.qsize() > 0):
             input_str = inputQueue.get()
-            # print("input_str = {}".format(input_str))
+            # print2("input_str = {}".format(input_str))
 
             if (input_str == EXIT_COMMAND):
-                print("Exiting serial terminal.")
+                print2("Exiting serial terminal.")
                 break
             
             if (REAL_SERIAL == True):
@@ -110,7 +116,7 @@ def main():
     if (REAL_SERIAL == True):
         ser.close()
     
-    print("End.")
+    print2("End.")
 
 if (__name__ == '__main__'):
     main()
