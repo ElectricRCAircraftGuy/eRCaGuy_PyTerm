@@ -25,20 +25,18 @@ import serial
 
 # Global variables
 exitFlag = False # Set to True to cause the program to quit
-KBD_INPUT_PROMPT = '> '
 # For testing purposes, where no serial device is plugged in, set to True
 NO_SERIAL = True
 
 def read_kbd_input(inputQueue):
-    global KBD_INPUT_PROMPT
-    print(KBD_INPUT_PROMPT, end='')
-
+    print('Ready for keyboard input:')
     while (True):
         # Receive keyboard input from user.
         input_str = input()
         
         # Enqueue this input string.
-        # Note: Lock not required here since multiple queue methods are not required to be called as a single atomic unit.
+        # Note: Lock not required here since multiple queue methods are not required to be called as a single atomic
+        # unit.
         inputQueue.put(input_str)
 
 def main():
@@ -89,9 +87,9 @@ def main():
         if (inputQueue.qsize() > 0):
             input_str = inputQueue.get()
             print("input_str = {}".format(input_str))
-            print(KBD_INPUT_PROMPT, end='')
 
-            if (input_str is 'exit'):
+            if (input_str == 'exit'):
+                print("Exiting program.")
                 exitFlag = True
 
         # Sleep for a short time to prevent this thread from sucking up all of your CPU resources on your PC.
@@ -99,6 +97,8 @@ def main():
 
     if (NO_SERIAL == False):
         ser.close()
+    
+    print("End of program.")
 
 if (__name__ == '__main__'):
     main()
