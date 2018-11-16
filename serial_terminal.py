@@ -13,12 +13,19 @@ To run this program: `python3 serial_terminal.py`
 
 """
 
+import time
 import serial
 
 def main():
 
+    # Open serial port
+    # Note: The port is immediately opened on object creation when a port is given. See:
+    # https://pyserial.readthedocs.io/en/latest/pyserial_api.html.
     port = '/dev/ttyUSB1'
     baudrate = 115200
+
+    print('Opening serial port using PySerial. serial.Version = {}\n'
+          '  port = "{}", baudrate = {}'.format(serial.VERSION, port, baudrate))
 
     ser = serial.Serial(
         port = port, 
@@ -28,28 +35,19 @@ def main():
         bytesize=serial.EIGHTBITS,
         )
 
-    print("Opening serial port using PySerial. serial.Version = {}".format(serial.VERSION))
+    while (True):
+        if (ser.inWaiting() > 0):
+            data_str = ser.read(ser.inWaiting()).decode('ascii')
+            print(data_str, end='') 
+        
 
-    # Attempt twice
-    for i in range(2):
-        if (ser.isOpen() == True):
-            print("Warning: serial port already open. Closing it now.")
-            ser.close()
-
-    if (ser.isOpen() == True):
-        print("Warning: serial port already open. Closing it now.")
-        ser.close()
-
-    # print('Opening serial port "{}" at baudrate = {}.'.format(port, baudrate)
-    # # ser.open()
-
-    # keep_going = True
-    # while(keep_going):
-        # if (ser.in)
+        # Sleep for a short time to prevent this thread from sucking up all of your CPU resources on your PC.
+        time.sleep(0.01) 
 
 
 
-    # ser.close()
+
+    ser.close()
 
 if (__name__ == '__main__'):
     main()
