@@ -11,6 +11,7 @@ References:
 - https://stackoverflow.com/questions/1607612/python-how-do-i-make-a-subclass-from-a-superclass
 - https://docs.python.org/3/library/queue.html
 - https://docs.python.org/3.7/library/threading.html
+- https://docs.python.org/3/library/enum.html
 
 To install PySerial: `sudo python3 -m pip install pyserial`
 
@@ -22,13 +23,21 @@ import queue
 import threading
 import time
 import serial
+import datetime
+import sys
+import enum
 
 # Global variables
 # For testing purposes, where no real serial device is plugged in, set to False
 REAL_SERIAL = True
+LOGGING_ON = True # for logging data to a file
+LOG_FOLDER = '/home/gabriels/GS/dev/Python/Projects/serial_terminal/logs/'
 TERMINAL_PROMPT_STR = "terminal> "
 TP_SPACES = ' '*len(TERMINAL_PROMPT_STR) # Terminal Prompt spaces string
 EXIT_COMMAND = "exit" # Command to exit this program
+# Default serial settings:
+port = '/dev/ttyUSB1'
+baudrate = 115200
 
 def print2(*args_tuple, **kwargs_dict):
     """
@@ -46,8 +55,13 @@ def print2(*args_tuple, **kwargs_dict):
 
     print(*args_tuple, **kwargs_dict)
 
-def read_kbd_input(inputQueue):
+def read_kbd_input(inputQueue, threadEvent):
     global EXIT_COMMAND
+
+    # Wait here until the other thread calls "threadEvent.set()"
+    threadEvent.wait()
+    threadEvent.clear()
+
     print2('Ready for keyboard input. To exit the serial terminal, type "{}".'.format(EXIT_COMMAND))
     while (True):
         # Receive keyboard input from user.
@@ -60,14 +74,13 @@ def read_kbd_input(inputQueue):
 
 def main():
     global EXIT_COMMAND
+    global LOG_FOLDER
+
     TERMINATING_CHARS = '\r' # For terminating serial output
 
     # Open serial port
     # Note: The port is immediately opened on object creation when a port is given. See:
     # https://pyserial.readthedocs.io/en/latest/pyserial_api.html.
-    port = '/dev/ttyUSB1'
-    baudrate = 115200
-
     if (REAL_SERIAL == False):
         print2("SIMULATED SERIAL: ")
 
@@ -90,19 +103,45 @@ def main():
     #Keyboard input queue
     inputQueue = queue.Queue()
 
+    # For synchronizing threads.
+    threadEvent = threading.Event()
+
     # Create & start a thread to read keyboard input.
     # Set daemon to True to auto-kill this thread when all other non-daemonic threads are exited. This is desired since
     # this thread has no cleanup to do, which would otherwise require a more graceful approach to clean up then exit.
-    inputThread = threading.Thread(target=read_kbd_input, args=(inputQueue,), daemon=True)
+    inputThread = threading.Thread(target=read_kbd_input, args=(inputQueue, threadEvent), daemon=True)
     inputThread.start()
+
+    # File logging
+    if (LOGGING_ON == True):
+        # Get a filename, in desired format. 
+        # See: https://stackoverflow.com/a/32490661/4561887 and http://strftime.org/
+        filename = datetime.datetime.today().strftime('%Y%m%d-%H%Mhrs%Ssec_serialdata.txt')
+        path = LOG_FOLDER + filename
+        file = open(path, "w")
+        print2(('Logging all incoming serial messages to\n' + 
+                 TP_SPACES + '"{}".').format(path))
+
+    # Don't let the inputThread continue until we are ready to start the main loop. Let it continue now.
+    threadEvent.set()
 
     # main loop
     while (True):
         # Read incoming serial data
         if (REAL_SERIAL == True):
             if (ser.inWaiting() > 0):
+                # Print as ascii-decoded data:
                 data_str = ser.read(ser.inWaiting()).decode('ascii')
                 print(data_str, end='') 
+
+                # # OR: print as binary data that has been converted to a string-representable format 
+                # # (ex: make \n and \r printable):
+                # data_str = repr(ser.read(ser.inWaiting()))
+                # print(data_str) 
+
+                if (LOGGING_ON == True):
+                    file.write(data_str)
+                    file.flush() # Force immediate write to file instead of buffering
         
         # Read keyboard inputs
         # Note: if this queue were being read in multiple places we would need to use locks to ensure multi-method-call
@@ -117,15 +156,74 @@ def main():
             
             if (REAL_SERIAL == True):
                 input_str += TERMINATING_CHARS
-                ser.write(input_str.encode('ascii'))
+                input_str_encoded = input_str.encode('ascii')
+                ser.write(input_str_encoded)
 
         # Sleep for a short time to prevent this thread from sucking up all of your CPU resources on your PC.
         time.sleep(0.01) 
 
+    # Cleanup before quitting
     if (REAL_SERIAL == True):
         ser.close()
+    if (LOGGING_ON == True):
+        file.close()
     
     print2("End.")
 
+class ParseArgsErr(enum.Enum):
+    OK = 0
+    EXIT = 1
+
+def parseArgs():
+    global port
+    global baudrate
+
+    parseArgsErr = ParseArgsErr.OK
+
+    # Interpret incoming arguments. Note that sys.argv[0] is the python filename itself.
+    # Ex. command: `python3 this_filename.py /dev/ttyUSB1 115200`
+    #   len(sys.argv) = 3
+    #   sys.argv[0] = "this_filename.py"
+    #   sys.argv[1] = "/dev/ttyUSB1"
+    #   sys.argv[2] = "115200"
+    
+    argsLen = len(sys.argv)
+    maxArgsLen = 3
+
+    # FOR DEBUGGING
+    # # print arguments
+    # print("argsLen = " + str(argsLen))
+    # print("Arguments list:")
+    # for i in range(len(sys.argv)):
+    #     print("sys.argv[" + str(i) + "] = " + str(sys.argv[i]))
+    # print()
+
+    if (argsLen > maxArgsLen):
+        print("Error: too many arguments.");
+    elif (argsLen > 1):
+        # Read in the 2nd argument
+        # 'h' or '-h'
+        if (sys.argv[1] == 'h' or sys.argv[1] == '-h'):
+            print('Command syntax: `serial_terminal (optional)<serial_port> (optional)<baudrate>`\n'
+                  'Examples:\n'
+                  '  `serial_terminal`\n'
+                  '  `serial_terminal /dev/ttyUSB1`\n'
+                  '  `serial_terminal /dev/ttyUSB1 115200`')
+            parseArgsErr = ParseArgsErr.EXIT
+        # <serial_port>
+        else: 
+            port = sys.argv[1]
+            # print('port = "{}"'.format(port))
+    if (argsLen > 2):
+        # Read in 3rd argument
+        # <baudrate>
+        baudrate = int(sys.argv[2])
+        # print('baudrate = {}'.format(baudrate))
+
+    return parseArgsErr
+
 if (__name__ == '__main__'):
-    main()
+    parseArgsErr = parseArgs()
+    if (parseArgsErr == ParseArgsErr.OK):
+        main()
+
