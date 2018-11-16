@@ -24,9 +24,15 @@ import time
 import serial
 
 # Global variables
-exitFlag = False # Set to True to cause the program to quit
-# For testing purposes, where no serial device is plugged in, set to True
-NO_SERIAL = True
+# For testing purposes, where no real serial device is plugged in, set to False
+REAL_SERIAL = True
+
+def terminal_print(*args_tuple):
+    """
+    A print() wrapper to append a short string in front of prints coming from this program itself.
+    This helps distinguish data being received over serial from data being printed by this program's internals.
+    """
+    print("terminal > ", args_tuple)
 
 def read_kbd_input(inputQueue):
     print('Ready for keyboard input:')
@@ -35,13 +41,14 @@ def read_kbd_input(inputQueue):
         input_str = input()
         
         # Enqueue this input string.
-        # Note: Lock not required here since multiple queue methods are not required to be called as a single atomic
-        # unit.
+        # Note: Lock not required here since we are only calling a single Queue method, not a sequence of them 
+        # which would otherwise need to be treated as one atomic operation.
         inputQueue.put(input_str)
 
 def main():
-    global exitFlag
-    global KBD_INPUT_PROMPT
+
+    EXIT_COMMAND = "exit" # Command to exit this program
+    TERMINATING_CHARS = '\r' # For terminating serial output
 
     # Open serial port
     # Note: The port is immediately opened on object creation when a port is given. See:
@@ -49,13 +56,13 @@ def main():
     port = '/dev/ttyUSB1'
     baudrate = 115200
 
-    if (NO_SERIAL == True):
+    if (REAL_SERIAL == False):
         print("SIMULATED SERIAL: ")
 
     print('Opening serial port using PySerial. serial.Version = {}\n'
           '  port = "{}", baudrate = {}'.format(serial.VERSION, port, baudrate))
 
-    if (NO_SERIAL == False):
+    if (REAL_SERIAL == True):
         ser = serial.Serial(
             port = port, 
             baudrate = baudrate,
@@ -74,9 +81,10 @@ def main():
     inputThread = threading.Thread(target=read_kbd_input, args=(inputQueue,), daemon=True)
     inputThread.start()
 
-    while (exitFlag == False):
+    # main loop
+    while (True):
         # Read incoming serial data
-        if (NO_SERIAL == False):
+        if (REAL_SERIAL == True):
             if (ser.inWaiting() > 0):
                 data_str = ser.read(ser.inWaiting()).decode('ascii')
                 print(data_str, end='') 
@@ -86,19 +94,23 @@ def main():
         # atomic access. Since this is the only place we can remove from the queue, however, no locks are required.
         if (inputQueue.qsize() > 0):
             input_str = inputQueue.get()
-            print("input_str = {}".format(input_str))
+            # print("input_str = {}".format(input_str))
 
-            if (input_str == 'exit'):
-                print("Exiting program.")
-                exitFlag = True
+            if (input_str == EXIT_COMMAND):
+                print("Exiting serial terminal.")
+                break
+            
+            if (REAL_SERIAL == True):
+                input_str += TERMINATING_CHARS
+                ser.write(input_str.encode('ascii'))
 
         # Sleep for a short time to prevent this thread from sucking up all of your CPU resources on your PC.
         time.sleep(0.01) 
 
-    if (NO_SERIAL == False):
+    if (REAL_SERIAL == True):
         ser.close()
     
-    print("End of program.")
+    print("End.")
 
 if (__name__ == '__main__'):
     main()
