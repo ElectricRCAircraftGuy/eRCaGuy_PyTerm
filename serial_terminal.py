@@ -153,6 +153,10 @@ def main():
             if (input_str == EXIT_COMMAND):
                 print2("Exiting serial terminal.")
                 break
+            # TODO: add the ability to read in arrow keys (ex: up arrow to show the last command)
+            # This may take a bit of effort, as the below code does not work.
+            # elif (input_str == "^[[A"):
+            #     print2("You pressed Up.")
             
             if (REAL_SERIAL == True):
                 input_str += TERMINATING_CHARS
