@@ -34,26 +34,26 @@ import enum
 import os
 import inspect
 
+# TODO: restructure this entire program to use classes and object-orientation instead of global variables.
+# This will likely involve making main() its own class. As far as reading in variables from other modules goes, 
+# I can still read those in as their own module-based "global" variables, and that's fine I think as it still is
+# a valid form of data encapsulation.
+
 # Global variables & "constants"
 TERMINAL_PROMPT_STR = "terminal> "
 TP_SPACES = ' '*len(TERMINAL_PROMPT_STR) # Terminal Prompt spaces string
 user_config_path = 'unk'
 
-# Copied in from user configuration file
+# Copied in from the user configuration file
 REAL_SERIAL = config.REAL_SERIAL
 LOGGING_ON = config.LOGGING_ON
 LOG_FOLDER = config.LOG_FOLDER
 EXIT_COMMAND = config.EXIT_COMMAND
-
-port = config.port
-baudrate = config.baudrate 
-parity = serial.PARITY_NONE,
-stopbits = serial.STOPBITS_ONE,
-bytesize = serial.EIGHTBITS,
+serial_config = config.serial_config
 
 def print2(*args_tuple, **kwargs_dict):
     """
-    Print from terminal
+    Print from terminal.
 
     A print() wrapper to append a short string in front of prints coming from this program itself.
     This helps distinguish data being received over serial from data being printed by this program's internals.
@@ -89,8 +89,7 @@ def main():
     global EXIT_COMMAND
     global LOG_FOLDER
     global user_config_path
-    global port
-    global baudrate
+    global serial_config
 
     print2('Using user configuration file: \n' +
            TP_SPACES + '"{}".'.format(user_config_path))
@@ -107,7 +106,7 @@ def main():
              TP_SPACES + 'PySerial serial.Version = {}\n' + 
              TP_SPACES + 'port = "{}"\n' + 
              TP_SPACES + 'baudrate = {}'
-            ).format(serial.VERSION, port, baudrate))
+            ).format(serial.VERSION, serial_config['port'], serial_config['baudrate']))
 
     if (REAL_SERIAL == True):
         ser = serial.Serial(
