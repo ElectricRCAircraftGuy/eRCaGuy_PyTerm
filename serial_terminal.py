@@ -19,6 +19,10 @@ To run this program: `python3 serial_terminal.py`
 
 """
 
+# Internal Modules
+import user_config as config
+
+# External Modules
 import queue
 import threading
 import time
@@ -26,18 +30,22 @@ import serial
 import datetime
 import sys
 import enum
+import os
+import inspect
 
-# Global variables
-# For testing purposes, where no real serial device is plugged in, set to False
-REAL_SERIAL = True
-LOGGING_ON = True # for logging data to a file
-LOG_FOLDER = '/home/gabriels/GS/dev/Python/Projects/serial_terminal/logs/'
+# Global variables & "constants"
 TERMINAL_PROMPT_STR = "terminal> "
 TP_SPACES = ' '*len(TERMINAL_PROMPT_STR) # Terminal Prompt spaces string
-EXIT_COMMAND = "exit" # Command to exit this program
-# Default serial settings:
-port = '/dev/ttyUSB1'
-baudrate = 115200
+user_config_path = 'unk'
+
+# Copied in from user configuration file
+REAL_SERIAL = config.REAL_SERIAL
+LOGGING_ON = config.LOGGING_ON
+LOG_FOLDER = config.LOG_FOLDER
+EXIT_COMMAND = config.EXIT_COMMAND
+port = config.port
+baudrate = config.baudrate 
+
 
 def print2(*args_tuple, **kwargs_dict):
     """
@@ -75,6 +83,7 @@ def read_kbd_input(inputQueue, threadEvent):
 def main():
     global EXIT_COMMAND
     global LOG_FOLDER
+    global user_config_path
 
     TERMINATING_CHARS = '\r' # For terminating serial output
 
@@ -85,7 +94,7 @@ def main():
         print2("SIMULATED SERIAL: ")
 
     print2(('Opening serial port using PySerial.\n' + 
-             TP_SPACES + 'serial.Version = {}\n' + 
+             TP_SPACES + 'PySerial serial.Version = {}\n' + 
              TP_SPACES + 'port = "{}"\n' + 
              TP_SPACES + 'baudrate = {}'
             ).format(serial.VERSION, port, baudrate))
@@ -181,8 +190,15 @@ class ParseArgsErr(enum.Enum):
 def parseArgs():
     global port
     global baudrate
+    global user_config_path
 
     parseArgsErr = ParseArgsErr.OK
+
+    # Obtain location of the user configuration path so that the user knows where it is to modify it.
+    # Source: Retrieving python module path: https://stackoverflow.com/a/12154601/4561887
+    user_config_path = inspect.getfile(config)
+    print2('Using User config file path: \n' +
+           TP_SPACES + '"{}".'.format(user_config_path))
 
     # Interpret incoming arguments. Note that sys.argv[0] is the python filename itself.
     # Ex. command: `python3 this_filename.py /dev/ttyUSB1 115200`
@@ -202,6 +218,9 @@ def parseArgs():
     #     print("sys.argv[" + str(i) + "] = " + str(sys.argv[i]))
     # print()
 
+    # help_str = ''
+
+    # Too many args
     if (argsLen > maxArgsLen):
         print("Error: too many arguments.");
     elif (argsLen > 1):
