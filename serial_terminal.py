@@ -5,13 +5,14 @@ Gabriel Staples
 14 Nov. 2018
 
 References:
-- https://pyserial.readthedocs.io/en/latest/pyserial_api.html
-- *****https://www.tutorialspoint.com/python/python_multithreading.htm
-- *****https://en.wikibooks.org/wiki/Python_Programming/Threading
-- https://stackoverflow.com/questions/1607612/python-how-do-i-make-a-subclass-from-a-superclass
-- https://docs.python.org/3/library/queue.html
-- https://docs.python.org/3.7/library/threading.html
-- https://docs.python.org/3/library/enum.html
+1. PySerial (Python serial library) documentation: https://pyserial.readthedocs.io/en/latest/pyserial_api.html
+2. *****https://www.tutorialspoint.com/python/python_multithreading.htm
+3. *****https://en.wikibooks.org/wiki/Python_Programming/Threading
+4. https://stackoverflow.com/questions/1607612/python-how-do-i-make-a-subclass-from-a-superclass
+5. https://docs.python.org/3/library/queue.html
+6. https://docs.python.org/3.7/library/threading.html
+7. https://docs.python.org/3/library/enum.html
+8. https://en.wikipedia.org/wiki/8-N-1 
 
 To install PySerial: `sudo python3 -m pip install pyserial`
 
@@ -43,9 +44,12 @@ REAL_SERIAL = config.REAL_SERIAL
 LOGGING_ON = config.LOGGING_ON
 LOG_FOLDER = config.LOG_FOLDER
 EXIT_COMMAND = config.EXIT_COMMAND
+
 port = config.port
 baudrate = config.baudrate 
-
+parity = serial.PARITY_NONE,
+stopbits = serial.STOPBITS_ONE,
+bytesize = serial.EIGHTBITS,
 
 def print2(*args_tuple, **kwargs_dict):
     """
@@ -63,6 +67,7 @@ def print2(*args_tuple, **kwargs_dict):
 
     print(*args_tuple, **kwargs_dict)
 
+# Stand-alone thread to read (and block on) keyboard inputs:
 def read_kbd_input(inputQueue, threadEvent):
     global EXIT_COMMAND
 
@@ -77,13 +82,18 @@ def read_kbd_input(inputQueue, threadEvent):
         
         # Enqueue this input string.
         # Note: Lock not required here since we are only calling a single Queue method, not a sequence of them 
-        # which would otherwise need to be treated as one atomic operation.
+        # which would otherwise need locks to be treated as one atomic operation.
         inputQueue.put(input_str)
 
 def main():
     global EXIT_COMMAND
     global LOG_FOLDER
     global user_config_path
+    global port
+    global baudrate
+
+    print2('Using user configuration file: \n' +
+           TP_SPACES + '"{}".'.format(user_config_path))
 
     TERMINATING_CHARS = '\r' # For terminating serial output
 
@@ -104,8 +114,8 @@ def main():
             port = port, 
             baudrate = baudrate,
             parity = serial.PARITY_NONE,
-            stopbits=serial.STOPBITS_ONE,
-            bytesize=serial.EIGHTBITS,
+            stopbits = serial.STOPBITS_ONE,
+            bytesize = serial.EIGHTBITS,
             )
 
     # queueLock = threading.Lock() # To enforce atomic access to a chunk of multiple queue method calls in a row
@@ -130,6 +140,14 @@ def main():
         file = open(path, "w")
         print2(('Logging all incoming serial messages to\n' + 
                  TP_SPACES + '"{}".').format(path))
+        file.write('Serial settings:\n'
+                   '  port = {}\n'
+                   '  baudrate = {}\n'
+                   '  parity = {}\n'
+                   '  stopbits = {}\n'
+                   '  bytesize = {}\n'.format(port, baudrate, serial.PARITY_NONE, serial.STOPBITS_ONE, 
+                                              serial.EIGHTBITS)
+                  )
 
     # Don't let the inputThread continue until we are ready to start the main loop. Let it continue now.
     threadEvent.set()
@@ -197,8 +215,6 @@ def parseArgs():
     # Obtain location of the user configuration path so that the user knows where it is to modify it.
     # Source: Retrieving python module path: https://stackoverflow.com/a/12154601/4561887
     user_config_path = inspect.getfile(config)
-    print2('Using User config file path: \n' +
-           TP_SPACES + '"{}".'.format(user_config_path))
 
     # Interpret incoming arguments. Note that sys.argv[0] is the python filename itself.
     # Ex. command: `python3 this_filename.py /dev/ttyUSB1 115200`
@@ -218,30 +234,37 @@ def parseArgs():
     #     print("sys.argv[" + str(i) + "] = " + str(sys.argv[i]))
     # print()
 
-    # help_str = ''
+    help_str = ('Command syntax: `serial_terminal [serial_port] [baudrate]`\n'
+                'Examples:\n'
+                '  `serial_terminal`\n'
+                '  `serial_terminal /dev/ttyUSB1`\n'
+                '  `serial_terminal /dev/ttyUSB1 115200`\n'
+                'To change other settings, or user configuration defaults, edit the user configuration file directly, '
+                'here:\n'
+                '  "{}"'.format(user_config_path))
 
     # Too many args
     if (argsLen > maxArgsLen):
         print("Error: too many arguments.");
+        parseArgsErr = ParseArgsErr.EXIT
     elif (argsLen > 1):
         # Read in the 2nd argument
         # 'h' or '-h'
         if (sys.argv[1] == 'h' or sys.argv[1] == '-h'):
-            print('Command syntax: `serial_terminal (optional)<serial_port> (optional)<baudrate>`\n'
-                  'Examples:\n'
-                  '  `serial_terminal`\n'
-                  '  `serial_terminal /dev/ttyUSB1`\n'
-                  '  `serial_terminal /dev/ttyUSB1 115200`')
             parseArgsErr = ParseArgsErr.EXIT
         # <serial_port>
         else: 
             port = sys.argv[1]
             # print('port = "{}"'.format(port))
+    
     if (argsLen > 2):
         # Read in 3rd argument
         # <baudrate>
         baudrate = int(sys.argv[2])
         # print('baudrate = {}'.format(baudrate))
+
+    if (parseArgsErr != parseArgsErr.OK):
+        print(help_str)
 
     return parseArgsErr
 
