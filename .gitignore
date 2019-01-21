@@ -8,3 +8,5 @@ __pycache__
 # LibreOffice temp files
 *.odt#
 *.ods#
+
+/temp

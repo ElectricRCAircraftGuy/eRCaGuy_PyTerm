@@ -1,26 +1,33 @@
 
 import serial
 
-# User Configuration Global variables:
+# User Configuration Global "Constants":
 
-# For testing purposes, where no real serial device is plugged in, set to False; set to True to actually communicate
-# over a plugged-in serial device.
-# REAL_SERIAL = False
-REAL_SERIAL = True
+# For testing purposes, where no real serial device is plugged in, set SIMULATE_SERIAL to True; set to False
+# to actually communicate over a real, plugged-in serial device.
+# SIMULATE_SERIAL = True
+SIMULATE_SERIAL = False
 LOGGING_ON = True # for logging data to a file
-LOG_FOLDER = './logs/'
-EXIT_COMMAND = "exit" # Command to exit this program
+LOG_FOLDER = './logs/' # log folder path relative to the main script
+EXIT_COMMAND = "exit" # typed keyboard command from user to exit this program
+
+# User Configuration Global Variables:
+
+terminating_chars = '\r' # For terminating serial output ####### TODO: MAKE THIS SETTABLE LIVE!
 
 # Default serial settings used when not specified at the command line.
 # See PySerial (Python serial library) documentation for options: 
 # https://pyserial.readthedocs.io/en/latest/pyserial_api.html
-# Note: 8N1 (https://en.wikipedia.org/wiki/8-N-1) means 8 data bits (bytesize), No parity bit, and 1 stop bit.
+# - Note: the commonly-used "8N1" serial settings for devices means 8 data bits (bytesize), No parity bit, and 1 
+#   stop bit. (See https://en.wikipedia.org/wiki/8-N-1).
 serial_config = {
     'port': '/dev/ttyUSB1',
     'baudrate': 115200,
-    'bytesize': serial.EIGHTBITS,
-    'parity': serial.PARITY_NONE,
-    'stopbits': serial.STOPBITS_ONE,
+    'bytesize': serial.EIGHTBITS, # 8
+    'parity': serial.PARITY_NONE, # N
+    'stopbits': serial.STOPBITS_ONE, # 1
+    'timeout': None,
+    'write_timeout': None,
 }
 
 
