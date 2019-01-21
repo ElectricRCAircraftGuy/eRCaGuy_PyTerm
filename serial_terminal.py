@@ -14,6 +14,7 @@ References:
 6. https://docs.python.org/3.7/library/threading.html
 7. https://docs.python.org/3/library/enum.html
 8. https://en.wikipedia.org/wiki/8-N-1 
+9. https://stackoverflow.com/questions/4308182/getting-the-exception-value-in-python
 
 To install PySerial: `sudo python3 -m pip install pyserial`
 
@@ -126,16 +127,16 @@ class Terminal():
         if (user_config.SIMULATE_SERIAL):
             self.printt("SIMULATED SERIAL: ")
     
-        if (not user_config.SIMULATE_SERIAL):#############
+        if (not user_config.SIMULATE_SERIAL):
             # Open up an actual serial port.
-            # - Note: The port is immediately opened on object creation when a port is given. See:
+            # - Note: The port is immediately opened (via `open()`) on object creation when a port is given. See:
             # https://pyserial.readthedocs.io/en/latest/pyserial_api.html.
             try:
                 ser = serial.Serial(**user_config.serial_config)
-#             except:
-#                 self.printt("eeeeeeeee")
-            except FileNotFoundError:
-                self.printt("SERIAL ERROR: Plug in your serial device.")
+            except serial.serialutil.SerialException as e:
+                self.printt("FAILED SERIAL OBJECT CREATION: Plug in your serial device.\n" +
+                            self.tp_spaces + repr(e))
+                return
     
         # NOT NEEDED YET: To enforce atomic access to a chunk of multiple queue method calls in a row.
         # queueLock = threading.Lock() 
@@ -152,7 +153,7 @@ class Terminal():
         inputThread = threading.Thread(target=self.read_kbd_input, args=(inputQueue, threadEvent), daemon=True)
         inputThread.start()
     
-        # File logging
+        # Open file for logging
         if (user_config.LOGGING_ON):
             # Get a filename, in desired format. 
             # See: https://stackoverflow.com/a/32490661/4561887 and http://strftime.org/
