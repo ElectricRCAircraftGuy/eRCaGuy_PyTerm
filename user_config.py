@@ -5,7 +5,8 @@ import serial
 
 # For testing purposes, where no real serial device is plugged in, set to False; set to True to actually communicate
 # over a plugged-in serial device.
-REAL_SERIAL = False
+# REAL_SERIAL = False
+REAL_SERIAL = True
 LOGGING_ON = True # for logging data to a file
 LOG_FOLDER = './logs/'
 EXIT_COMMAND = "exit" # Command to exit this program

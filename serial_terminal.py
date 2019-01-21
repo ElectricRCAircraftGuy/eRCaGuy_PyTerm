@@ -2,7 +2,8 @@
 serial_terminal.py
 
 Gabriel Staples
-14 Nov. 2018
+https://github.com/ElectricRCAircraftGuy/eRCaGuy_PyTerm
+Started: 14 Nov. 2018
 
 References:
 1. PySerial (Python serial library) documentation: https://pyserial.readthedocs.io/en/latest/pyserial_api.html

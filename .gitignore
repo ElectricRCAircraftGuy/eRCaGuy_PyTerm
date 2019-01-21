@@ -1,5 +1,10 @@
 # User's private data logs
 /logs
 
-# Python cache
+# Python cache & other auto-generated files
 __pycache__
+*.pyc
+
+# LibreOffice temp files
+*.odt#
+*.ods#
