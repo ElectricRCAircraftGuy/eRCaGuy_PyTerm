@@ -32,7 +32,7 @@ import user_config
 # External Modules
 import datetime
 import enum
-import inspect
+import inspect # find the path to a module
 import os
 import queue
 import serial
@@ -63,7 +63,6 @@ class Terminal():
         # showing them where it is to modify it.
         # - Source: Retrieving python module path: https://stackoverflow.com/a/12154601/4561887
         self.user_config_path = inspect.getfile(user_config)
-        self.logging_on = user_config.LOGGING_ON
 
     def printt(self, *args_tuple, **kwargs_dict):
         """
@@ -106,15 +105,15 @@ class Terminal():
     def main(self):
         "Main program thread (with infinite loop) to read and process serial data & user commands."
     
-        # Open file for logging
-        if (self.logging_on):
-            # Get a filename, in desired format. 
-            # See: https://stackoverflow.com/a/32490661/4561887 and http://strftime.org/
-            filename = datetime.datetime.today().strftime('%Y%m%d-%H%Mhrs%Ssec_serialdata.txt')
-            path = user_config.LOG_FOLDER + filename
-            file = open(path, "w")
-            self.printt(('Logging all incoming serial messages to\n' + 
-                         self.tp_spaces + '"{}".').format(path))
+        # # Open file for logging
+        # if (self.logging_on):
+        #     # Get a filename, in desired format. 
+        #     # See: https://stackoverflow.com/a/32490661/4561887 and http://strftime.org/
+        #     filename = datetime.datetime.today().strftime('%Y%m%d-%H%Mhrs%Ssec_serialdata.txt')
+        #     path = user_config.LOG_FOLDER + filename
+        #     file = open(path, "w")
+        #     self.printt(('Logging all incoming serial messages to\n' + 
+        #                  self.tp_spaces + '"{}".').format(path))
     
         self.printt('Using user configuration file: \n' +
                     self.tp_spaces + '"{}".'.format(self.user_config_path))
