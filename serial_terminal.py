@@ -27,40 +27,39 @@ To run this program: `python3 serial_terminal.py`
 import user_config
 
 # External Modules
+import datetime
+import enum
+import inspect
+import os
 import queue
+import serial
+import sys
 import threading
 import time
-import serial
-import datetime
-import sys
-import enum
-import os
-import inspect
-
-# ########TODO: restructure this entire program to use classes and object-orientation instead of global variables.
-# This will likely involve making main() its own class. As far as reading in variables from other modules goes, 
-# I can still read those in as their own module-based "global" variables, and that's fine I think as it still is
-# a valid form of data encapsulation.
 
 class ParseArgsErr(enum.Enum):
     """
     Error code enum for parsing command-line input arguments to this program.
     - Note: This is a custom enum child class which inherits from parent class enum.Enum.
     """
-    
+    # Shared class members
     OK = 0
     EXIT = 1
 
 class Terminal():
     "Class to talk to a device via a (serial) terminal"
 
-    # Shared members:
+    # Shared class members:
     # (None)
     
     def __init__(self):
-        self.terminal_prompt_str = 'terminal> '
+        self.terminal_prompt_str = 'PyTerm> '
         self.tp_spaces = ' '*len(self.terminal_prompt_str) # Terminal Prompt spaces string
-        self.user_config_path = None
+        
+        # Obtain location of the user configuration module/file path so we can print it to the user,
+        # showing them where it is to modify it.
+        # - Source: Retrieving python module path: https://stackoverflow.com/a/12154601/4561887
+        self.user_config_path = inspect.getfile(user_config)
 
     def printt(self, *args_tuple, **kwargs_dict):
         """
@@ -96,40 +95,41 @@ class Terminal():
             inputQueue.put(input_str)
     
     def main(self):
-        "Main thread (incl. infinite loop) to read and process serial data."
+        "Main program thread (with infinite loop) to read and process serial data & user commands."
     
         self.printt('Using user configuration file: \n' +
                     self.tp_spaces + '"{}".'.format(self.user_config_path))
     
+        self.printt(
+            ('Opening serial port using PySerial.\n' + 
+             self.tp_spaces + 'PySerial serial.Version = {}\n' + 
+             self.tp_spaces + 'port = "{}"\n' + 
+             self.tp_spaces + 'baudrate = {}\n' +
+             self.tp_spaces + 'bytesize = {}\n' + 
+             self.tp_spaces + 'parity = {}\n' + 
+             self.tp_spaces + 'stopbits = {}\n' + 
+             self.tp_spaces + '(read) timeout = {}\n' + 
+             self.tp_spaces + 'write_timeout = {}'
+             ).format(
+                 serial.VERSION, 
+                 user_config.serial_config['port'], 
+                 user_config.serial_config['baudrate'], 
+                 user_config.serial_config['bytesize'], 
+                 user_config.serial_config['parity'], 
+                 user_config.serial_config['stopbits'], 
+                 user_config.serial_config['timeout'], 
+                 user_config.serial_config['write_timeout'], 
+             )
+        )
+    
         # Open serial port
-        # Note: The port is immediately opened on object creation when a port is given. See:
-        # https://pyserial.readthedocs.io/en/latest/pyserial_api.html.
         if (user_config.SIMULATE_SERIAL):
             self.printt("SIMULATED SERIAL: ")
     
-        self.printt(('Opening serial port using PySerial.\n' + 
-                self.tp_spaces + 'PySerial serial.Version = {}\n' + 
-                self.tp_spaces + 'port = "{}"\n' + 
-                self.tp_spaces + 'baudrate = {}\n' +
-                self.tp_spaces + 'bytesize = {}\n' + 
-                self.tp_spaces + 'parity = {}\n' + 
-                self.tp_spaces + 'stopbits = {}\n' + 
-                self.tp_spaces + '(read) timeout = {}\n' + 
-                self.tp_spaces + 'write_timeout = {}'
-                ).format(
-                    serial.VERSION, 
-                    user_config.serial_config['port'], 
-                    user_config.serial_config['baudrate'], 
-                    user_config.serial_config['bytesize'], 
-                    user_config.serial_config['parity'], 
-                    user_config.serial_config['stopbits'], 
-                    user_config.serial_config['timeout'], 
-                    user_config.serial_config['write_timeout'], 
-                )
-            )
-    
         if (not user_config.SIMULATE_SERIAL):#############
             # Open up an actual serial port.
+            # - Note: The port is immediately opened on object creation when a port is given. See:
+            # https://pyserial.readthedocs.io/en/latest/pyserial_api.html.
             try:
                 ser = serial.Serial(**user_config.serial_config)
 #             except:
@@ -160,7 +160,7 @@ class Terminal():
             path = user_config.LOG_FOLDER + filename
             file = open(path, "w")
             self.printt(('Logging all incoming serial messages to\n' + 
-                     self.tp_spaces + '"{}".').format(path))
+                         self.tp_spaces + '"{}".').format(path))
 #########################
 #             file.write('Serial settings:\n'#############
 #                        '  port = {}\n'
@@ -229,10 +229,6 @@ class Terminal():
     
         parseArgsErr = ParseArgsErr.OK
     
-        # Obtain location of the user configuration path so that the user knows where it is to modify it.
-        # Source: Retrieving python module path: https://stackoverflow.com/a/12154601/4561887
-        self.user_config_path = inspect.getfile(user_config)
-    
         # Interpret incoming arguments. Note that sys.argv[0] is the python filename itself.
         # Ex. command: `python3 this_filename.py /dev/ttyUSB1 115200`
         #   len(sys.argv) = 3
@@ -251,14 +247,16 @@ class Terminal():
         #     print("sys.argv[" + str(i) + "] = " + str(sys.argv[i]))
         # print()
     
-        help_str = ('Command syntax: `serial_terminal [serial_port] [baudrate]`\n'
-                    'Examples:\n'
-                    '  `serial_terminal`\n'
-                    '  `serial_terminal /dev/ttyUSB1`\n'
-                    '  `serial_terminal /dev/ttyUSB1 115200`\n'
-                    'To change other settings, or user configuration defaults, edit the user configuration file directly, '
-                    'here:\n'
-                    '  "{}"'.format(self.user_config_path))
+        self.help_str = (
+            'Command syntax: `serial_terminal [serial_port] [baudrate]`\n'
+            'Examples:\n'
+            '  `serial_terminal`\n'
+            '  `serial_terminal /dev/ttyUSB1`\n'
+            '  `serial_terminal /dev/ttyUSB1 115200`\n'
+            'To change other settings, or user configuration defaults, edit the user configuration file directly, '
+            'here:\n'
+            '  "{}"'.format(self.user_config_path)
+        )
     
         # Too many args
         if (argsLen > maxArgsLen):
@@ -281,13 +279,17 @@ class Terminal():
             # print('baudrate = {}'.format(baudrate))
     
         if (parseArgsErr != parseArgsErr.OK):
-            print(help_str)
+            print(self.help_str)
     
         return parseArgsErr
 
-if (__name__ == '__main__'):
+def main():
+    "main function"
     term = Terminal()
     parseArgsErr = term.parseArgs()
     if (parseArgsErr == ParseArgsErr.OK):
         term.main()
+
+if (__name__ == '__main__'):
+    main()
 
