@@ -2,7 +2,9 @@
 serial_terminal.py
 
 Gabriel Staples
-https://github.com/ElectricRCAircraftGuy/eRCaGuy_PyTerm
+Website: www.ElectricRCAircraftGuy.com
+- click "Feedback/Corrections/Contact me" link at top of website to get my email
+Project page: https://github.com/ElectricRCAircraftGuy/eRCaGuy_PyTerm
 Started: 14 Nov. 2018
 
 References:
@@ -61,6 +63,7 @@ class Terminal():
         # showing them where it is to modify it.
         # - Source: Retrieving python module path: https://stackoverflow.com/a/12154601/4561887
         self.user_config_path = inspect.getfile(user_config)
+        self.logging_on = user_config.LOGGING_ON
 
     def printt(self, *args_tuple, **kwargs_dict):
         """
@@ -68,9 +71,14 @@ class Terminal():
     
         A print() wrapper to append a short string in front of prints coming from this program itself.
         This helps distinguish data being received over serial from data being printed by this program's internals.
+        
+        Here is the print function prototype: `print(*objects, sep=' ', end='\n', file=sys.stdout, flush=False)`.
+        - See: https://docs.python.org/3/library/functions.html#print.
+        This means that the `args_tuple` contains all objects to print (`*objects`), and the `kwargs_dict` contains
+        the `sep`, `end`, `file`, and `flush` parameters.
         """
-    
-        # Append self.terminal_prompt_str to front of first element in tuple, rebuilding the tuple
+        
+        # Append self.terminal_prompt_str to front of first element in tuple, rebuilding the tuple.
         if (len(args_tuple) > 1):
             args_tuple = (self.terminal_prompt_str + args_tuple[0], args_tuple[1:])
         else:
@@ -97,6 +105,16 @@ class Terminal():
     
     def main(self):
         "Main program thread (with infinite loop) to read and process serial data & user commands."
+    
+        # Open file for logging
+        if (self.logging_on):
+            # Get a filename, in desired format. 
+            # See: https://stackoverflow.com/a/32490661/4561887 and http://strftime.org/
+            filename = datetime.datetime.today().strftime('%Y%m%d-%H%Mhrs%Ssec_serialdata.txt')
+            path = user_config.LOG_FOLDER + filename
+            file = open(path, "w")
+            self.printt(('Logging all incoming serial messages to\n' + 
+                         self.tp_spaces + '"{}".').format(path))
     
         self.printt('Using user configuration file: \n' +
                     self.tp_spaces + '"{}".'.format(self.user_config_path))
@@ -153,15 +171,7 @@ class Terminal():
         inputThread = threading.Thread(target=self.read_kbd_input, args=(inputQueue, threadEvent), daemon=True)
         inputThread.start()
     
-        # Open file for logging
-        if (user_config.LOGGING_ON):
-            # Get a filename, in desired format. 
-            # See: https://stackoverflow.com/a/32490661/4561887 and http://strftime.org/
-            filename = datetime.datetime.today().strftime('%Y%m%d-%H%Mhrs%Ssec_serialdata.txt')
-            path = user_config.LOG_FOLDER + filename
-            file = open(path, "w")
-            self.printt(('Logging all incoming serial messages to\n' + 
-                         self.tp_spaces + '"{}".').format(path))
+
 #########################
 #             file.write('Serial settings:\n'#############
 #                        '  port = {}\n'
@@ -189,7 +199,7 @@ class Terminal():
                     # data_str = repr(ser.read(ser.inWaiting()))
                     # print(data_str) 
     
-                    if (user_config.LOGGING_ON):
+                    if (self.logging_on):
                         file.write(data_str)
                         file.flush() # Force immediate write to file instead of buffering
             
@@ -221,7 +231,7 @@ class Terminal():
         # TIME THERE IS ANY TYPE OF MAJOR FAILURE WHICH CAUSES THE PROGRAM TO ABORT
         if (not user_config.SIMULATE_SERIAL):
             ser.close()
-        if (user_config.LOGGING_ON):
+        if (self.logging_on):
             file.close()
         
         self.printt("End.")
