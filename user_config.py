@@ -7,7 +7,7 @@ import serial
 # to actually communicate over a real, plugged-in serial device.
 # SIMULATE_SERIAL = True
 SIMULATE_SERIAL = False
-LOGGING_ON = True # for logging data to a file
+LOGGER_IS_ON = True # for logging data to a file
 LOG_FOLDER = './logs/' # log folder path relative to the main script
 EXIT_COMMAND = "exit" # typed keyboard command from user to exit this program
 
