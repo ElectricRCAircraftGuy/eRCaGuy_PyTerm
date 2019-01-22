@@ -13,15 +13,15 @@ python3
 # Instructions:
 
 ## Linux:
-Create a symbolic link in your Linux home directory so you can run this program simply by calling `serial_terminal` from any directory in the terminal. Be sure to use the full path to the .sh shell script:
+Create a symbolic link in your Linux home directory so you can run this program simply by calling `pyterm` from any directory in the terminal. Be sure to use the full path to the .sh shell script:
 
 (RECOMMENDED) "Install" (ie: to run via a symbolic link in your user bin directory):
 
-    mkdir -p ~/bin && ln -s full/path/to/serial_terminal.sh ~/bin/serial_terminal
+    mkdir -p ~/bin && ln -s full/path/to/pyterm.sh ~/bin/pyterm
 
 Run without install:
 
-If you skip this step you can still run it by calling the full path to `serial_terminal.sh` or by using the full path to the .py file in this direct python call: `python3 serial_terminal.py`.
+If you skip this step you can still run it by calling the full path to `pyterm.sh` or by using the full path to the .py file in this direct python call: `python3 pyterm.py`.
 
 See all plugged in serial USB devices:
 
@@ -31,26 +31,26 @@ See all plugged in serial USB devices:
 
 To Run:
 
-Use `py -3 serial_terminal.py` in the commands below, rather than `serial_terminal` or `python3 serial_terminal.py`.
+Use `py -3 pyterm.py` in the commands below, rather than `pyterm` or `python3 pyterm.py`.
 
 
 ## User settings can be edited directly in `user_config.py`.
 
 ## Commands:
 
-Replace `serial_terminal` with the proper command, as described above in the "Linux" and "Windows" sections.
+Replace `pyterm` with the proper command, as described above in the "Linux" and "Windows" sections.
 
 For help:
 
-    serial_terminal -h
+    pyterm -h
 
 Command syntax: 
 
-    serial_terminal [serial_port] [baudrate]
+    pyterm [serial_port] [baudrate]
 
 Sample commands to run this program:
 
-    serial_terminal
-    serial_terminal /dev/ttyUSB1
-    serial_terminal /dev/ttyUSB1 115200
+    pyterm
+    pyterm /dev/ttyUSB1
+    pyterm /dev/ttyUSB1 115200
 

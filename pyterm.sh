@@ -20,4 +20,4 @@ DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null && pwd )"
 # - Be sure to forward the incoming arguments on to the python script using the `"$@"` part. 
 # - See: https://stackoverflow.com/a/14340879/4561887
 cd $DIR
-python3 ./serial_terminal.py "$@"
+python3 ./pyterm.py "$@"
