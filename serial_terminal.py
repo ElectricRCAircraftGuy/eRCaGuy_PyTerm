@@ -27,6 +27,7 @@ To run this program: `python3 serial_terminal.py`
 """
 
 # Internal Modules
+import logger
 import user_config
 
 # External Modules
@@ -56,8 +57,11 @@ class Terminal():
     # (None)
     
     def __init__(self):
-        self.terminal_prompt_str = 'PyTerm> '
-        self.tp_spaces = ' '*len(self.terminal_prompt_str) # Terminal Prompt spaces string
+        "Class constructor."
+        # Terminal prompt string to indicate messages being printed by this application, as opposed to messages
+        # coming in over serial
+        self.prompt_str = 'PyTerm> ' 
+        self.tp_spaces = ' '*len(self.prompt_str) # Terminal Prompt spaces string
         
         # Obtain location of the user configuration module/file path so we can print it to the user,
         # showing them where it is to modify it.
@@ -77,11 +81,11 @@ class Terminal():
         the `sep`, `end`, `file`, and `flush` parameters.
         """
         
-        # Append self.terminal_prompt_str to front of first element in tuple, rebuilding the tuple.
+        # Append self.prompt_str to front of first element in tuple, rebuilding the tuple.
         if (len(args_tuple) > 1):
-            args_tuple = (self.terminal_prompt_str + args_tuple[0], args_tuple[1:])
+            args_tuple = (self.prompt_str + args_tuple[0], args_tuple[1:])
         else:
-            args_tuple = (self.terminal_prompt_str + args_tuple[0],)
+            args_tuple = (self.prompt_str + args_tuple[0],)
     
         print(*args_tuple, **kwargs_dict)
     
@@ -92,7 +96,7 @@ class Terminal():
         threadEvent.wait()
         threadEvent.clear()
     
-        self.printt('Ready for keyboard input. To exit the serial terminal, type "{}".'.format(user_config.EXIT_COMMAND))
+        self.logger.printAndWriteIfOn('Ready for keyboard input. To exit the serial terminal, type "{}".'.format(user_config.EXIT_COMMAND))
         while (True):
             # Receive keyboard input from user.
             input_str = input()
@@ -105,15 +109,8 @@ class Terminal():
     def main(self):
         "Main program thread (with infinite loop) to read and process serial data & user commands."
     
-        # # Open file for logging
-        # if (self.logging_on):
-        #     # Get a filename, in desired format. 
-        #     # See: https://stackoverflow.com/a/32490661/4561887 and http://strftime.org/
-        #     filename = datetime.datetime.today().strftime('%Y%m%d-%H%Mhrs%Ssec_serialdata.txt')
-        #     path = user_config.LOG_FOLDER + filename
-        #     file = open(path, "w")
-        #     self.printt(('Logging all incoming serial messages to\n' + 
-        #                  self.tp_spaces + '"{}".').format(path))
+        # Open file for logging
+        self.logger = logger.Logger(self.printt, self.tp_spaces)
     
         self.printt('Using user configuration file: \n' +
                     self.tp_spaces + '"{}".'.format(self.user_config_path))
@@ -218,7 +215,7 @@ class Terminal():
                 #     self.printt("You pressed Up.")
                 
                 if (not user_config.SIMULATE_SERIAL):
-                    input_str += user_config.terminating_chars
+                    input_str += user_config.line_ending
                     input_str_encoded = input_str.encode('ascii')
                     ser.write(input_str_encoded)
     

@@ -7,13 +7,13 @@ import serial
 # to actually communicate over a real, plugged-in serial device.
 # SIMULATE_SERIAL = True
 SIMULATE_SERIAL = False
-LOGGER_IS_ON = True # for logging data to a file
 LOG_FOLDER = './logs/' # log folder path relative to the main script
-EXIT_COMMAND = "exit" # typed keyboard command from user to exit this program
+EXIT_COMMAND = "exit" # typed keyboard command from user to exit this program#####
 
 # User Configuration Global Variables:
 
-terminating_chars = '\r' # For terminating serial output ####### TODO: MAKE THIS SETTABLE LIVE!
+logger_is_on = True # for logging data to a file
+line_ending = '\r' # Characters to append to all outgoing messages over serial
 
 # Default serial settings used when not specified at the command line.
 # See PySerial (Python serial library) documentation for options: 

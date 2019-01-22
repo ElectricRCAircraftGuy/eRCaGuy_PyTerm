@@ -11,7 +11,7 @@ class Logger:
     
     def __init__(self, print_func=None, spaces=None):
         "Logger constructor"
-        self.logger_is_on = user_config.LOGGER_IS_ON
+        self.logger_is_on = user_config.logger_is_on
         self.log_file = None
         
         if (print_func):
