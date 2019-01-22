@@ -1,4 +1,17 @@
+# Author
+
+Gabriel Staples
+Website: www.ElectricRCAircraftGuy.com
+- click "Feedback/Corrections/Contact me" link at top of website to get my email
+Project page: https://github.com/ElectricRCAircraftGuy/eRCaGuy_PyTerm
+Started: 14 Nov. 2018
+
+# License
+
+MIT License
+
 # eRCaGuy_PyTerm
+
 A serial terminal/console written in Python (I hope to extend it to Telnet and others later)
 
 *Note: the `.project` and `.pydevproject` files are the Eclipse-based PyDev project files I use to open this project in Eclipse. Feel free to delete them and/or recreate them yourself by creating your own PyDev (Eclipse) project from this source code.*

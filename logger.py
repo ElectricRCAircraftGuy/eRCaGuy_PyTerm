@@ -77,6 +77,7 @@ class Logger:
             return
         
         self.log_file.write(string)
+        self.log_file.flush() # Force immediate write to file instead of buffering
         
     def writeIfOn(self, string):
         "Write to the log file, but ONLY IF the logger is on!"
@@ -95,6 +96,11 @@ class Logger:
         
         self.print(string)
         self.writeIfOn(string)
+        
+    def log(self, string):
+        "A nice and short alias to printAndWriteIfOn."
+        
+        self.printAndWriteIfOn(string)
     
     def setLogging(self, logger_is_on):
         "Turn logger on or off. If turning it on, open a log file if one isn't already open."
