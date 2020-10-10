@@ -9,7 +9,7 @@ www.ElectricRCAircraftGuy.com
 
 # Status
 
-It works quite well! 
+Ready for use! It works quite well! 
 
 
 # Usage
