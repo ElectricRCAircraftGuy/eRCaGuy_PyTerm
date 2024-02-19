@@ -144,16 +144,24 @@ def main():
         # Read incoming serial data
         if (REAL_SERIAL == True):
             if (ser.inWaiting() > 0):
+                data_bytes = ser.read(ser.inWaiting())
+
                 # Print as ascii-decoded data:
-                data_str = ser.read(ser.inWaiting()).decode('ascii')
-                print(data_str, end='') 
+                if config.PRINT_FORMAT == "ASCII":
+                    data_str = data_bytes.decode('ascii')
+                   
+                    if config.REPLACE_BACKLASH_r_n:
+                        data_str = data_str.replace('\r\n', '\n')
 
-                # # OR: print as binary data that has been converted to a string-representable format 
-                # # (ex: make \n and \r printable):
-                # data_str = repr(ser.read(ser.inWaiting()))
-                # print(data_str) 
+                    print(data_str, end='') 
 
-                if (LOGGING_ON == True):
+                # OR: print as binary data that has been converted to a string-representable format 
+                # (ex: make \n and \r printable):
+                elif config.PRINT_FORMAT == "REPR":
+                    data_str = repr(data_bytes)
+                    print(data_str) 
+
+                if LOGGING_ON:
                     file.write(data_str)
                     file.flush() # Force immediate write to file instead of buffering
         
