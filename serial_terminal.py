@@ -1,8 +1,10 @@
+#!/usr/bin/env python3
+
 """
 serial_terminal.py
 
 Gabriel Staples
-14 Nov. 2018
+Originally Written: 14 Nov. 2018
 
 References:
 - https://pyserial.readthedocs.io/en/latest/pyserial_api.html
@@ -123,6 +125,9 @@ def main():
 
     # File logging
     if (LOGGING_ON == True):
+        # Ensure the log folder exists; this is the same as `mkdir -p "$LOG_FOLDER"` in Bash.
+        os.makedirs(LOG_FOLDER, exist_ok=True)
+
         # Get a filename, in desired format. 
         # See: https://stackoverflow.com/a/32490661/4561887 and http://strftime.org/
         filename = datetime.datetime.today().strftime('%Y%m%d-%H%Mhrs%Ssec_serialdata.txt')

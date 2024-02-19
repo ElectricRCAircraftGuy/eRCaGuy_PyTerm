@@ -1,5 +1,5 @@
 # User's private data logs
-/logs
+/logs/
 
-# Python cache
-__pycache__
+# Python cache dir
+__pycache__/
