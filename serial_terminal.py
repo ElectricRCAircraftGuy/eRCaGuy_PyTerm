@@ -148,7 +148,23 @@ def main():
 
                 # Print as ascii-decoded data:
                 if config.PRINT_FORMAT == "ASCII":
-                    data_str = data_bytes.decode('ascii')
+                    try:
+                        data_str = data_bytes.decode('ascii')
+                    except UnicodeDecodeError as e:
+                        data_str = ""
+
+                        # For what is inside the `e` exception object, see:
+                        # 1. https://docs.python.org/3/library/exceptions.html#UnicodeDecodeError
+                        # 2. https://docs.python.org/3/library/exceptions.html#UnicodeError
+                        print2("Error: UnicodeDecodeError: the bytes could not be decoded as " + 
+                               "ASCII.")
+                        print2(f"  Error: {e}")
+                        print2(f"  Invalid bytes are: {data_bytes[e.start:e.end]}")
+                        print2(f"  encoding: {e.encoding}")
+                        print2(f"  reason:   {e.reason}")
+                        print2(f"  object:   {e.object}")
+                        print2(f"  start:    {e.start}")
+                        print2(f"  end:      {e.end}")
                    
                     if config.REPLACE_BACKLASH_r_n:
                         data_str = data_str.replace('\r\n', '\n')
